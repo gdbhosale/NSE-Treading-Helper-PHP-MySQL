@@ -19,14 +19,38 @@ class Home extends CI_Controller {
     
     public function index() {
 		$this->load->view('index', $this->data);
+        
+        //echo getcwd();
 	}
     
     public function update() {
         
         $query = $this->db->get('companies');
-		if($query->num_rows() > 0)
-        
-        
+		if($query->num_rows() > 0) {
+            $this->data['message'] = "Companies presents";
+        } else {
+            $this->data['message'] = "Companies not presents";
+            $filename = date("");
+            $path = "http://www.nseindia.com/content/historical/EQUITIES/2015/FEB/cm16FEB2015bhav.csv.zip";
+            
+            $this->data['message'] = $path;
+            
+            
+            /*
+            // download latest files
+            file_put_contents($this->base_path . "Tmpfile.zip", fopen("http://someurl/file.zip", 'r'));
+            
+            // Open the Zip file
+            $zip = new ZipArchive;
+            $extractPath = "path_to_extract";
+            if($zip->open($zipFile) != "true"){
+             echo "Error :- Unable to open the Zip File";
+            } 
+            // Extract Zip File
+            $zip->extractTo($extractPath);
+            $zip->close();
+            */
+        }
         
         // select any company table
         // check if latest date is todays
