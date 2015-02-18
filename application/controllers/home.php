@@ -22,6 +22,8 @@ class Home extends CI_Controller {
     
     public function index() {
 		
+        $query = $this->db->get('companies');
+		$this->data['total_companies'] = $query->num_rows();
 		$this->load->view('index', $this->data);
         
         //echo getcwd();
@@ -36,69 +38,14 @@ class Home extends CI_Controller {
         } else {
             $this->data['message'] = "Companies not presents"."\n<br>";
             
-            // download last day file
-            $daypast = 2;
-            $filename = "";
-            $isFileReceived = false;
-            while(!$isFileReceived) {
-                $day = date('d',strtotime("-".$daypast." days"));
-                $month_str = strtoupper(date('M',strtotime("-".$daypast." days")));
-                $year = date('Y',strtotime("-".$daypast." days"));
-
-                $filename = "cm".$day.$month_str.$year."bhav.csv";
-                $path = "http://www.nseindia.com/content/historical/EQUITIES/".$year."/".$month_str."/".$filename.".zip";
-
-                $zipResource = fopen($this->base_path . "/TodaysFile.zip", "w");
-                
-                $page = $this->downloadFile($path, $zipResource);
-                
-                if(!$page) {
-                    $this->data['error'] .= "File: ".$path." : ".$this->curl_error_str."\n<br>";
-                    log_message("error", "File failed: ".$path." : ".$this->curl_error_str);
-                    $daypast += 1;
-                    if($daypast > 3) {
-                        break;
-                    }
-                    $isFileReceived = false;
-                } else {
-                    $this->data['message'] .= "Got file: ".$path."\n<br>";
-                    log_message("debug", "Got file: ".$path." : ".$this->curl_error_str);
-                    $isFileReceived = true;
-                }
-            }
+            $totalCompaniesLoaded = $this->loadCompanyList();
             
-            $this->unzipFile($this->base_path . "/TodaysFile.zip", $this->base_path."/zipFolder");
-            
-            $this->data['message'] .= "Extraction complete"."\n<br>";
-            
-            $csvData = $this->csvreader->parse_file($this->base_path."/zipFolder/".$filename);
-            
-            foreach($csvData as $field) {
-                //$this->data['message'] .= "".$field['SYMBOL']."<br>";
-                if($field['SERIES'] == "EQ") {
-                    $da = array(
-                        'symbol' => $field['SYMBOL'],
-                        'isin' => $field['ISIN']
-                    );
-                    $this->db->insert('companies', $da);
-                }
-            }
-            $this->data['message'] .= "Got total ".($this->db->insert_id())." companies...\n<br>";
-            
-            /*
-            // download latest files
-            
-            // Open the Zip file
-            $zip = new ZipArchive;
-            $extractPath = "path_to_extract";
-            if($zip->open($zipFile) != "true"){
-             echo "Error :- Unable to open the Zip File";
-            } 
-            // Extract Zip File
-            $zip->extractTo($extractPath);
-            $zip->close();
-            */
+            $this->data['message'] .= "Got total ".$totalCompaniesLoaded." companies...\n<br>";
         }
+        
+        $op = $this->loadDaywiseReport("16-02-15");
+        
+        $this->data['message'] = "Daily file downloaded: ".$op."\n<br>";
         
         // select any company table
         // check if latest date is todays
@@ -109,27 +56,119 @@ class Home extends CI_Controller {
             // generate log
             // push them to database
             // go back
-
+        $this->data['total_companies'] = $query->num_rows();
         $this->load->view('update', $this->data);
 	}
     
+    function loadDaywiseReport($day) {
+        $arr = explode("-", $day);
+        $day = $arr[0];
+        $month = $arr[1];
+        $year = $arr[2];
+
+        $filename = "PR".$day.$month.$year.".zip";
+        
+        // do we have file ?
+        $fileExists = false;
+        if(file_exists($this->base_path . "/stock_files/".$filename) && filesize($this->base_path . "/stock_files/".$filename) > 1000) {
+            $fileExists = true;
+        }
+        if(!$fileExists) {
+            $path = "http://www.nseindia.com/archives/equities/bhavcopy/pr/".$filename;
+
+            $zipResource = fopen($this->base_path . "/stock_files/".$filename, "w");
+
+            $page = $this->downloadFile($path, $zipResource);
+
+            if(!$page) {
+                $this->data['error'] .= "File failed: ".$path." : ".$this->curl_error_str."\n<br>";
+                log_message("error", "File failed: ".$path." : ".$this->curl_error_str);
+                return 0;
+            } else {
+                $this->data['message'] .= "Got file: ".$path."\n<br>";
+                log_message("debug", "Got file: ".$path." : ".$this->curl_error_str);
+            }
+        }
+        $this->emptyFolder($this->base_path."/stock_files/temp");
+        $this->unzipFile($this->base_path . "/stock_files/".$filename, $this->base_path."/stock_files/temp");
+    }
+    
+    function loadCompanyList() {
+        
+        $totalCompaniesLoaded = 0;
+        
+        // download last day file
+        $daypast = 2;
+        $filename = "";
+        $isFileReceived = false;
+        while(!$isFileReceived) {
+            $day = date('d',strtotime("-".$daypast." days"));
+            $month_str = strtoupper(date('M',strtotime("-".$daypast." days")));
+            $year = date('Y',strtotime("-".$daypast." days"));
+
+            $filename = "cm".$day.$month_str.$year."bhav.csv";
+            $path = "http://www.nseindia.com/content/historical/EQUITIES/".$year."/".$month_str."/".$filename.".zip";
+
+            $zipResource = fopen($this->base_path . "/TodaysFile.zip", "w");
+
+            $page = $this->downloadFile($path, $zipResource);
+
+            if(!$page) {
+                $this->data['error'] .= "File failed: ".$path." : ".$this->curl_error_str."\n<br>";
+                log_message("error", "File failed: ".$path." : ".$this->curl_error_str);
+                $daypast += 1;
+                if($daypast > 3) {
+                    break;
+                }
+                $isFileReceived = false;
+            } else {
+                $this->data['message'] .= "Got file: ".$path."\n<br>";
+                log_message("debug", "Got file: ".$path." : ".$this->curl_error_str);
+                $isFileReceived = true;
+            }
+        }
+
+        $this->unzipFile($this->base_path . "/TodaysFile.zip", $this->base_path."/temp");
+        // delete zip file
+        unlink($this->base_path . "/TodaysFile.zip");
+        
+        $this->data['message'] .= "Extraction complete"."\n<br>";
+
+        $csvData = $this->csvreader->parse_file($this->base_path."/temp/".$filename);
+
+        foreach($csvData as $field) {
+            //$this->data['message'] .= "".$field['SYMBOL']."<br>";
+            if($field['SERIES'] == "EQ") {
+                $da = array(
+                    'symbol' => $field['SYMBOL'],
+                    'isin' => $field['ISIN']
+                );
+                $this->db->insert('companies', $da);
+            }
+        }
+        $totalCompaniesLoaded = $this->db->insert_id();
+        return $totalCompaniesLoaded;
+    }
+    
+    function emptyFolder($folder) {
+        $files = glob($folder."/*");
+        foreach($files as $file) {
+            if(is_file($file))
+                unlink($file);
+        }
+    }
+    
     function unzipFile($zipFile, $folder) {
         $zip = new ZipArchive;
-            if($zip->open($zipFile) != "true") {
-                $this->data['error'] .= "Error :- Unable to open the Zip File: ".$zipFile."\n<br>";
-                log_message("error", "Unable to open the Zip File: ".$zipFile);
-            }
-            //Empty zipFolder
-            $files = glob($folder."/*");
-            foreach($files as $file) {
-                if(is_file($file))
-                    unlink($file);
-            }
-            // delete zip file
-            unlink($zipFile);
-            // Extract Zip File
-            $zip->extractTo($folder);
-            $zip->close();
+        if($zip->open($zipFile) != "true") {
+            $this->data['error'] .= "Error :- Unable to open the Zip File: ".$zipFile."\n<br>";
+            log_message("error", "Unable to open the Zip File: ".$zipFile);
+        }
+        //Empty zipFolder
+        $this->emptyFolder($folder);
+        // Extract Zip File
+        $zip->extractTo($folder);
+        $zip->close();
     }
     
     function downloadFile($src, $dest) {

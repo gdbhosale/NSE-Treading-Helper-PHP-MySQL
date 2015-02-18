@@ -3,6 +3,7 @@ include("header.php");
 ?>
 
 	<div id="body">
+        <h4>Total Companies: <?php echo $total_companies; ?></h4>
 		<p>Select following option:</p>
         
         <a href="<?php echo $base_url; ?>/home/update">Update DB</a><br><br>
