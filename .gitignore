@@ -1,5 +1,6 @@
 docs
 application/logs
-stokefiles/temp/
+stock_files/temp/
+temp/
 nse.sublime-project
 nse.sublime-workspace
