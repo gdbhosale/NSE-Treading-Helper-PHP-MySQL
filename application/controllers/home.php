@@ -43,7 +43,7 @@ class Home extends CI_Controller {
             $this->data['message'] .= "Got total ".$totalCompaniesLoaded." companies...\n<br>";
         }
         
-        $op = $this->loadDaywiseReport("16-02-15");
+        $op = $this->loadDaywiseReport("26-02-15");
         
         $this->data['message'] = "Daily file downloaded: ".$op."\n<br>";
         
@@ -164,7 +164,7 @@ class Home extends CI_Controller {
             $this->data['error'] .= "Error :- Unable to open the Zip File: ".$zipFile."\n<br>";
             log_message("error", "Unable to open the Zip File: ".$zipFile);
         }
-        //Empty zipFolder
+        //Empty temp
         $this->emptyFolder($folder);
         // Extract Zip File
         $zip->extractTo($folder);
