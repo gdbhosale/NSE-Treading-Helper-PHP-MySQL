@@ -82,6 +82,8 @@ h2.year{margin:0px;color:#4ED1E8;}
 .calendar td.calendar-day{width:14.28%;text-align:center;padding:0px;background:#EEE;border:solid 1px #FFF;font-size:12px;}
 .calendar td.calendar-day .popover{width:190px;}
 .calendar td.calendar-day .popover .popover-content a{display:block;}
+.calendar td.calendar-day.white button{background:#FFF;}
+.calendar td.calendar-day.white .popover-title{background:#EEE;}
 .calendar td.calendar-day.red button{background:#FFD9D9;}
 .calendar td.calendar-day.red .popover-title{background:#FFD9D9;}
 .calendar td.calendar-day.green button{background:#D9FFDB;}

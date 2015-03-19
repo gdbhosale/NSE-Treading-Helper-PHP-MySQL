@@ -5,7 +5,10 @@
 </div>
 <div class="row">
     <div class="col-lg-12">
-        <?php echo $content; ?>
+        <h4>Outout:</h4>
+        <?php echo $message; ?>
+        <h4>Errors:</h4>
+        <?php echo $error; ?>
     </div>
 </div>
 

@@ -52,17 +52,14 @@ class Calendar extends CI_Controller {
     }
 
     public function update_db_datewise() {
-        $date = $this->input0->get("date", TRUE);
+        $date = $this->input->get("date", TRUE);
         $query = $this->db->get('companies');
         if($query->num_rows() > 0) {
             $this->data['date'] = $date;
 
             // 26-02-15
-            $op = $this->loadDaywiseReport($date);
+            $this->loadDaywiseReport($date);
 
-            log_message("debug", $op);
-
-            $this->data['content'] = $op;
             $this->data['main_content'] = __FUNCTION__;
             $this->load->view('template', $this->data);
         } else {
@@ -72,39 +69,9 @@ class Calendar extends CI_Controller {
         }
     }
 
-    public function update() {
-        $this->data['error'] = "";
-        
-        $query = $this->db->get('companies');
-		if($query->num_rows() > 0) {
-            $this->data['message'] = "Companies presents"."\n<br>";
-        } else {
-            $this->data['message'] = "Companies not presents"."\n<br>";
-            
-            $totalCompaniesLoaded = $this->loadCompanyList();
-            
-            $this->data['message'] .= "Got total ".$totalCompaniesLoaded." companies...\n<br>";
-        }
-        
-        $op = $this->loadDaywiseReport("26-02-15");
-        
-        $this->data['message'] .= "Daily file downloaded: ".$op."\n<br>";
-        
-        // select any company table
-        // check if latest date is todays
-        //if yes
-            // Go Back with success
-        //else
-            // download opline files of missing days
-            // generate log
-            // push them to database
-            // go back
-        $this->data['total_companies'] = $query->num_rows();
-        $this->load->view('update', $this->data);
-	}
-    
     function loadDaywiseReport($day) {
-        $this->data['message'] .= "Load Data for date : (".$day.")<br>";
+        $this->data['message'] = "Load Data for date : (".$day.")<br>";
+        $this->data['error'] = "";
 
         $arr = explode("-", $day);
         $day = $arr[0];
@@ -210,84 +177,5 @@ class Calendar extends CI_Controller {
             }
         }
         $this->data['message'] .= "Total Updated: ".$comUpdated." * ".$comLateUpdated."<br>";
-    }
-    
-    function cleanComTables() {
-        $query = $this->db->get("companies");
-        foreach($query->result() as $row) {
-            $this->dbCom->empty_table($row->table);
-        }
-        //$this->dbCom->empty_table('mytable');
-        echo "SUCCESS";
-    }
-
-    function loadCompanyList() {
-        
-        $totalCompaniesLoaded = 0;
-        
-        // download last day file
-        $daypast = 1;
-        $filename = "";
-        $isFileReceived = false;
-        while(!$isFileReceived) {
-            $day = date('d',strtotime("-".$daypast." days"));
-            $month_str = strtoupper(date('M',strtotime("-".$daypast." days")));
-            $year = date('Y',strtotime("-".$daypast." days"));
-
-            $filename = "cm".$day.$month_str.$year."bhav.csv";
-            $path = "http://www.nseindia.com/content/historical/EQUITIES/".$year."/".$month_str."/".$filename.".zip";
-
-            $zipResource = fopen($this->base_path . "/TodaysFile.zip", "w");
-
-            $arr1 = downloadFile($path, $zipResource);
-            $page = $arr1['page'];
-
-            if(!$page) {
-                $this->data['error'] .= "File failed: ".$path." : ".$arr1['curl_error_str']."\n<br>";
-                log_message("error", "File failed: ".$path." : ".$arr1['curl_error_str']);
-                $daypast += 1;
-                if($daypast > 3) {
-                    break;
-                }
-                $isFileReceived = false;
-            } else {
-                $this->data['message'] .= "Got file: ".$path."\n<br>";
-                log_message("debug", "Got file: ".$path." : ".$arr1['curl_error_str']);
-                $isFileReceived = true;
-            }
-        }
-
-        unzipFile($this->base_path . "/TodaysFile.zip", $this->base_path."/temp");
-        // delete zip file
-        unlink($this->base_path . "/TodaysFile.zip");
-        
-        $this->data['message'] .= "Extraction complete"."\n<br>";
-
-        $csvData = $this->csvreader->parse_file($this->base_path."/temp/".$filename);
-
-        foreach($csvData as $field) {
-            //$this->data['message'] .= "".$field['SYMBOL']."<br>";
-            if($field['SERIES'] == "EQ") {
-                $tableName = processSymbol($field['SYMBOL']);
-                $da = array(
-                    'symbol' => $field['SYMBOL'],
-                    'table' => $tableName,
-                    'isin' => $field['ISIN']
-                );
-                $this->db->insert('companies', $da);
-                
-                $this->dbCom->query("CREATE TABLE IF NOT EXISTS ".$tableName." (
-                    id int(11) AUTO_INCREMENT,
-                    date date NOT NULL,
-                    open_price int(11) DEFAULT 0,
-                    high_price int(11) DEFAULT 0,
-                    low_price int(11) DEFAULT 0,
-                    close_price int(11) DEFAULT 0,
-                    PRIMARY KEY (id)
-                )");
-            }
-        }
-        $totalCompaniesLoaded = $this->db->insert_id();
-        return $totalCompaniesLoaded;
     }
 }

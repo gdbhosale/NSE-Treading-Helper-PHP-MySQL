@@ -134,6 +134,13 @@ function draw_calendar($month, $year) {
 	$CI =& get_instance();
 	$base_url = $CI->config->item("base_url");
 
+	$cntDate = intval(date("d"));
+	$cntMonth = intval(date("m"));
+	$cntYearY = intval(date("Y"));
+	$cntYear = intval(date("y"));
+
+	$cntTime = strtotime("".$cntYearY."-".$cntMonth."-".$cntDate);
+
 	/* draw table */
 	$calendar = '<table cellpadding="0" cellspacing="0" class="calendar">';
 
@@ -175,26 +182,48 @@ function draw_calendar($month, $year) {
 
 	/* keep going with days.... */
 	for($list_day = 1; $list_day <= $days_in_month; $list_day++):
-			
+
+		// trim date
+		$dateT = $list_day;
+		if($list_day < 10) {
+			$dateT = "0".$list_day;
+		}
+		$monthT = $month;
+		if($month < 10) {
+			$monthT = "0".$month;
+		}
+		$yearT = $year;
+		if($year >= 2000) {
+			$yearT = $year - ((int)($year / 100) * 100);
+		}
+		$dateTime = strtotime("".$year."-".$monthT."-".$dateT);
 		// process data load job
-		$is_data_loaded = true;
+		$is_data_loaded = false;
 		$data_load_success = true;
 
 		$classS = "";
 		$contentS = "";
-		if($is_data_loaded) {
-			if($data_load_success) {
-				$classS = "green";
-				$contentS = "<a class='btn btn-warning btn-sm' href='".$base_url."'>Download Again</a>";
+		// compare dates
+		//echo "Now: ".("".$cntYearY."-".$cntMonth."-".$cntDate)." Date: ".("".$year."-".$monthT."-".$dateT);
+
+		//echo "Now: ".$cntTime." Date: ".$dateTime;
+		if($cntTime > $dateTime) {
+			if($is_data_loaded) {
+				if($data_load_success) {
+					$classS = "green";
+					$contentS = "<a class='btn btn-warning btn-sm' href='".$base_url."'>Download Again</a>";
+				} else {
+					$classS = "red";
+					$contentS = "<a class='btn btn-danger btn-sm' href='".$base_url."'>Retry</a>";
+				}
 			} else {
-				$classS = "red";
-				$contentS = "<a class='btn btn-danger btn-sm' href='".$base_url."'>Retry</a>";
+				$classS = "";
+				$contentS = "<a class='btn btn-primary btn-sm' href='".$base_url."/calendar/update_db_datewise?date=".$dateT."-".$monthT."-".$yearT."'>Download</a>";
 			}
 		} else {
-			$classS = "";
-			$contentS = "<a class='btn btn-primary btn-sm' href='".$base_url."'>Download</a>";
+			$classS = "white";
+			$contentS = "Cannot download future data.";
 		}
-
 		$calendar.= '<td class="calendar-day '.$classS.'">';
 
 		/* add in the day number */
