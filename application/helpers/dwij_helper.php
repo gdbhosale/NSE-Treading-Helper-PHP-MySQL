@@ -1,0 +1,233 @@
+<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+
+if ( ! function_exists('startsWith')) {
+	function startsWith($haystack, $needle) {
+		return $needle === "" || strrpos($haystack, $needle, -strlen($haystack)) !== FALSE;
+	}
+}
+
+if ( ! function_exists('endsWith')) {
+	function endsWith($haystack, $needle) {
+		return $needle === "" || (($temp = strlen($haystack) - strlen($needle)) >= 0 && strpos($haystack, $needle, $temp) !== FALSE);
+	}
+}
+
+if (!function_exists('tsFormat')) {
+	function tsFormat($str, $format) {
+		$ts = strtotime($str);
+		return gmdate($format, $ts);
+	}
+}
+
+if (!function_exists('shortenUrl')) {
+	function shortenUrl($longUrl) {
+		$apiKey = 'AIzaSyDvaUg89uMNUQ3CSkUpio6dD0IudZ2ZWmQ';
+
+		$postData = array('longUrl' => $longUrl, 'key' => $apiKey);
+		$jsonData = json_encode($postData);
+
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, 'https://www.googleapis.com/urlshortener/v1/url');
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($ch, CURLOPT_HEADER, 0);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type:application/json'));
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+		
+		$page = curl_exec($ch);
+
+		$dat = json_decode($page);
+		if(isset($dat->id)) {
+			$page = $dat->id;
+			$curl_error_str = curl_error($ch);
+			log_message("debug", "shortenUrl: ".$page);
+			if($curl_error_str != NULL || $curl_error_str != "") {
+				$page = $curl_error_str;
+				//log_message("error", "shortenUrl: ".$page);
+			}
+			curl_close($ch);
+			return $page;
+		} else {
+			return $longUrl;
+		}
+	}
+}
+
+function getComingDayOfWeek($dow) {
+	//echo $dow;
+	$dowArr = array( "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY");
+	//0 for Sunday, 6 for Saturday
+	$cntDateT = time();
+	$reqDay = array_search($dow, $dowArr);
+	$cntDay = date("w", $cntDateT);
+
+	$cntDate = date("m/d/Y");
+
+	$diff = 0;
+	if($reqDay == $cntDay) {
+		$diff = 0;
+	} else if($reqDay > $cntDay) {
+		$diff = $reqDay - $cntDay;
+	} else {
+		$diff = 7 - ($cntDay - $reqDay);
+	}
+	//echo "Add ".($diff)." Days";
+	$tomorrow = date('Y-m-d', strtotime($cntDate . " +".$diff." days"));
+	return $tomorrow;
+}
+
+function emptyFolder($folder) {
+    $files = glob($folder."/*");
+    foreach($files as $file) {
+        if(is_file($file))
+            unlink($file);
+    }
+}
+
+function processSymbol($symb) {
+    $symb = str_replace("&", "_", $symb);
+    $symb = str_replace("-", "_", $symb);
+    $symb = str_replace(",", "_", $symb);
+
+    return trim($symb);
+}
+
+function unzipFile($zipFile, $folder) {
+    $zip = new ZipArchive;
+    $error = "";
+    if($zip->open($zipFile) != "true") {
+        $error .= "Error :- Unable to open the Zip File: ".$zipFile."\n<br>";
+        log_message("error", "Unable to open the Zip File: ".$zipFile);
+    }
+    //Empty temp
+    emptyFolder($folder);
+    // Extract Zip File
+    $zip->extractTo($folder);
+    $zip->close();
+    return $error;
+}
+
+function downloadFile($src, $dest) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $src);
+    curl_setopt($ch, CURLOPT_FAILONERROR, true);
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_AUTOREFERER, true);
+    curl_setopt($ch, CURLOPT_BINARYTRANSFER,true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0); 
+    curl_setopt($ch, CURLOPT_FILE, $dest);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.A.B.C Safari/525.13');
+    $page = curl_exec($ch);
+    $curl_error_str = curl_error($ch);
+    curl_close($ch);
+
+    $r = array("page" => $page, "curl_error_str" => $curl_error_str);
+    return $r;
+}
+
+// http://davidwalsh.name/php-calendar
+function draw_calendar($month, $year) {
+	$CI =& get_instance();
+	$base_url = $CI->config->item("base_url");
+
+	/* draw table */
+	$calendar = '<table cellpadding="0" cellspacing="0" class="calendar">';
+
+	/* table headings */
+	//$headings = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday');
+	$headings = array('S','M','T','W','T','F','S');
+	$monthsArr = array(
+	    'January',
+	    'February',
+	    'March',
+	    'April',
+	    'May',
+	    'June',
+	    'July ',
+	    'August',
+	    'September',
+	    'October',
+	    'November',
+	    'December',
+	    );
+	$calendar.= '<tr class="calendar-row"><td class="calendar-day-head monthS" colspan="7">'.$monthsArr[$month-1].'</td></tr>';
+	$calendar.= '<tr class="calendar-row"><td class="calendar-day-head">'.implode('</td><td class="calendar-day-head">', $headings).'</td></tr>';
+
+	/* days and weeks vars now ... */
+	$running_day = date('w',mktime(0,0,0,$month,1,$year));
+	$days_in_month = date('t',mktime(0,0,0,$month,1,$year));
+	$days_in_this_week = 1;
+	$day_counter = 0;
+	$dates_array = array();
+
+	/* row for week one */
+	$calendar.= '<tr class="calendar-row">';
+
+	/* print "blank" days until the first of the current week */
+	for($x = 0; $x < $running_day; $x++):
+		$calendar.= '<td class="calendar-day-np"> </td>';
+		$days_in_this_week++;
+	endfor;
+
+	/* keep going with days.... */
+	for($list_day = 1; $list_day <= $days_in_month; $list_day++):
+			
+		// process data load job
+		$is_data_loaded = true;
+		$data_load_success = true;
+
+		$classS = "";
+		$contentS = "";
+		if($is_data_loaded) {
+			if($data_load_success) {
+				$classS = "green";
+				$contentS = "<a class='btn btn-warning btn-sm' href='".$base_url."'>Download Again</a>";
+			} else {
+				$classS = "red";
+				$contentS = "<a class='btn btn-danger btn-sm' href='".$base_url."'>Retry</a>";
+			}
+		} else {
+			$classS = "";
+			$contentS = "<a class='btn btn-primary btn-sm' href='".$base_url."'>Download</a>";
+		}
+
+		$calendar.= '<td class="calendar-day '.$classS.'">';
+
+		/* add in the day number */
+		$calendar.= '<button class="day-number" data-toggle="popover" data-placement="top" title="Date: '.$list_day." ".$monthsArr[$month-1]." ".$year.'" data-content="'.$contentS.'">'.$list_day.'</button>';
+
+		/** QUERY THE DATABASE FOR AN ENTRY FOR THIS DAY !!  IF MATCHES FOUND, PRINT THEM !! **/
+		//$calendar.= str_repeat('<p> </p>',2);
+			
+		$calendar.= '</td>';
+		if($running_day == 6):
+			$calendar.= '</tr>';
+			if(($day_counter+1) != $days_in_month):
+				$calendar.= '<tr class="calendar-row">';
+			endif;
+			$running_day = -1;
+			$days_in_this_week = 0;
+		endif;
+		$days_in_this_week++; $running_day++; $day_counter++;
+	endfor;
+
+	/* finish the rest of the days in the week */
+	if($days_in_this_week < 8):
+		for($x = 1; $x <= (8 - $days_in_this_week); $x++):
+			$calendar.= '<td class="calendar-day-np"> </td>';
+		endfor;
+	endif;
+
+	/* final row */
+	$calendar.= '</tr>';
+
+	/* end the table */
+	$calendar.= '</table>';
+	
+	/* all done, return result */
+	return $calendar;
+}

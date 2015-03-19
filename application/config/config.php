@@ -14,6 +14,7 @@
 | path to your installation.
 |
 */
+$config['sitename']	= 'NSE Helper';
 $config['base_url']	= 'http://localhost/NSE-Treading-Helper-PHP-MySQL';
 $config['base_path']	= '/Applications/MAMP/htdocs/NSE-Treading-Helper-PHP-MySQL';
 $config['stock_files']	= 'stock_files';

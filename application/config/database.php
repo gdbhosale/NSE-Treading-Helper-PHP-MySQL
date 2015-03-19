@@ -48,6 +48,23 @@
 $active_group = 'default';
 $active_record = TRUE;
 
+$db['companies']['hostname'] = 'localhost';
+$db['companies']['username'] = 'root';
+$db['companies']['password'] = 'root';
+$db['companies']['database'] = 'nse_tread_companies';
+$db['companies']['dbdriver'] = 'mysql';
+$db['companies']['dbprefix'] = '';
+$db['companies']['pconnect'] = TRUE;
+$db['companies']['db_debug'] = TRUE;
+$db['companies']['cache_on'] = FALSE;
+$db['companies']['cachedir'] = '';
+$db['companies']['char_set'] = 'utf8';
+$db['companies']['dbcollat'] = 'utf8_general_ci';
+$db['companies']['swap_pre'] = '';
+$db['companies']['autoinit'] = FALSE;
+$db['companies']['stricton'] = FALSE;
+
+
 $db['default']['hostname'] = 'localhost';
 $db['default']['username'] = 'root';
 $db['default']['password'] = 'root';
