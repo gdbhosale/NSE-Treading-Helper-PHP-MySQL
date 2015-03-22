@@ -116,7 +116,7 @@ function downloadFile($src, $dest) {
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     curl_setopt($ch, CURLOPT_AUTOREFERER, true);
     curl_setopt($ch, CURLOPT_BINARYTRANSFER,true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 0);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0); 
     curl_setopt($ch, CURLOPT_FILE, $dest);
@@ -130,7 +130,7 @@ function downloadFile($src, $dest) {
 }
 
 // http://davidwalsh.name/php-calendar
-function draw_calendar($month, $year) {
+function draw_calendar($month, $year, $report_days) {
 	$CI =& get_instance();
 	$base_url = $CI->config->item("base_url");
 
@@ -201,6 +201,19 @@ function draw_calendar($month, $year) {
 		$is_data_loaded = false;
 		$data_load_success = true;
 
+		$datt = array();
+
+		if(isset($report_days[$year."-".$monthT."-".$dateT])) {
+			$is_data_loaded = true;
+			$datt = $report_days[$year."-".$monthT."-".$dateT];
+			$datt['data'] = json_decode($datt['data']);
+			if($datt['status'] == "SUCCESS") {
+				$data_load_success = true;
+			} else {
+				$data_load_success = false;
+			}
+		}
+
 		$classS = "";
 		$contentS = "";
 		// compare dates
@@ -211,10 +224,15 @@ function draw_calendar($month, $year) {
 			if($is_data_loaded) {
 				if($data_load_success) {
 					$classS = "green";
-					$contentS = "<a class='btn btn-warning btn-sm' href='".$base_url."'>Download Again</a>";
+					$contentS = "Companies: ".$datt['tot_com_load']."<br>New Com.: ".$datt['new_com_load']."<a class='btn btn-warning btn-sm' style='margin-top:5px;' href='".$base_url."/calendar/update_db_datewise?date=".$dateT."-".$monthT."-".$yearT."'>Download Again</a>";
+					$contentS .= "<ol>";
+					foreach ($datt['data']->new_companies as $value) {
+						$contentS .= "<li>".$value."</li>";
+					}
+					$contentS .= "</ol>";
 				} else {
 					$classS = "red";
-					$contentS = "<a class='btn btn-danger btn-sm' href='".$base_url."'>Retry</a>";
+					$contentS = "<a class='btn btn-danger btn-sm' href='".$base_url."/calendar/update_db_datewise?date=".$dateT."-".$monthT."-".$yearT."'>Retry</a>";
 				}
 			} else {
 				$classS = "";

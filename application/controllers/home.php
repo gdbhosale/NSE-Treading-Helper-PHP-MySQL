@@ -55,13 +55,19 @@ class Home extends CI_Controller {
         $this->load->view('template', $this->data);
 	}
     
-    function cleanComTables() {
+    public function cleanComTables() {
         $query = $this->db->get("companies");
         foreach($query->result() as $row) {
-            $this->dbCom->empty_table($row->table);
+            //$this->dbCom->empty_table($row->table);
+            $this->dbCom->query("DROP TABLE IF EXISTS ".$row->table);
         }
+        $this->db->empty_table("companies");
+        $this->db->empty_table("date_reports");
+        $this->db->query("ALTER TABLE companies AUTO_INCREMENT = 1");
+        $this->db->query("ALTER TABLE date_reports AUTO_INCREMENT = 1");
         //$this->dbCom->empty_table('mytable');
-        echo "SUCCESS";
+        
+        $this->dashboard();
     }
 
     function loadCompanyList() {
@@ -133,12 +139,12 @@ class Home extends CI_Controller {
                         close_price int(11) DEFAULT 0,
                         PRIMARY KEY (id)
                     )");
+                    $totalCompaniesLoaded = $totalCompaniesLoaded + 1;
                 } else {
                     $this->data['error'] .= "Table / Company Already Present: ".$tableName."\n<br>";
                 }
             }
         }
-        $totalCompaniesLoaded = $this->db->insert_id();
         return $totalCompaniesLoaded;
     }
 }

@@ -29,7 +29,7 @@
 		for ($i=1; $i <= 12; $i++) { 
 			?>
 			<div class="col-lg-3 col-md-4 col-sm-6">
-		        <?php echo draw_calendar($i, 2015); ?>
+		        <?php echo draw_calendar($i, 2015, $report_days); ?>
 		    </div>
 			<?php
 		}

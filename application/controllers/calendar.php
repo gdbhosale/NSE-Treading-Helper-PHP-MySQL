@@ -23,7 +23,7 @@ class Calendar extends CI_Controller {
         $config['username'] = "root";
         $config['password'] = "root";
         $config['database'] = "nse_tread_companies";
-        $config['dbdriver'] = "mysql";
+        $config['dbdriver'] = "mysqli";
         $config['dbprefix'] = "";
         $config['pconnect'] = FALSE;
         $config['db_debug'] = TRUE;
@@ -40,6 +40,17 @@ class Calendar extends CI_Controller {
         $query = $this->db->get('companies');
         if($query->num_rows() > 0) {
             $this->data['cnt_year'] = 2015;
+
+            $this->db->where("date >= ", "".$this->data['cnt_year']."-01-01");
+            $this->db->where("date <= ", "".$this->data['cnt_year']."-12-31");
+            $q = $this->db->get("date_reports");
+            $days = array();
+            foreach($q->result_array() as $day) {
+                $days[$day['date']] = $day;
+            }
+            //print_r($days);
+            $this->data['report_days'] = $days;
+            
             $this->data['main_content'] = __FUNCTION__;
             $this->load->view('template', $this->data);
         } else {
@@ -73,31 +84,56 @@ class Calendar extends CI_Controller {
         $this->data['message'] = "Load Data for date : (".$day.")<br>";
         $this->data['error'] = "";
 
+        $status = "";
+        $data1 = array('file_name' => '', 'file_offline_status' => "false", 'file_download_status' => "false", "data_companies" => array(), "new_companies" => array(), "error_message" => "");
+
         $arr = explode("-", $day);
         $day = $arr[0];
         $month = $arr[1];
         $year = $arr[2];
 
         $filename = "PR".$day.$month.$year.".zip";
+
+        $data1['file_name'] = $filename;
         
         // do we have file ?
         $fileExists = false;
         if(file_exists($this->base_path . "/stock_files/".$filename) && filesize($this->base_path . "/stock_files/".$filename) > 1000) {
             $fileExists = true;
+            $data1['file_offline_status'] = 'true';
         }
+
         if(!$fileExists) {
+            $data1['file_offline_status'] = 'false';
+
             $path = "http://www.nseindia.com/archives/equities/bhavcopy/pr/".$filename;
 
             $zipResource = fopen($this->base_path . "/stock_files/".$filename, "w");
 
             $arr1 = downloadFile($path, $zipResource);
             $page = $arr1['page'];
-
+            
             if(!$page) {
+                $data1['file_download_status'] = "false";
+
                 $this->data['error'] .= "File failed: ".$path." : ".$arr1['curl_error_str']."\n<br>";
                 log_message("error", "File failed: ".$path." : ".$arr1['curl_error_str']);
+                
+                $data1['error_message'] = "File Download failed: ".$path." : ".$arr1['curl_error_str'];
+
+                $this->db->where("date", "20".$year."-".$month."-".$day);
+                $q = $this->db->get("date_reports");
+                if($q->num_rows() == 0) {
+                    $arr2 = array('date' => "20".$year."-".$month."-".$day, 'status' => "FAILED", 'tot_com_load' => 0, 'new_com_load' => 0, 'data' => json_encode($data1));
+                    $this->db->insert('date_reports', $arr2);
+                } else {
+                    $arr2 = array('status' => "FAILED", 'tot_com_load' => 0, 'new_com_load' => 0, 'data' => json_encode($data1));
+                    $this->db->where("date", "20".$year."-".$month."-".$day);
+                    $this->db->update('date_reports', $arr2);
+                }
                 return 0;
             } else {
+                $data1['file_download_status'] = "true";
                 $this->data['message'] .= "Got file: ".$path."\n<br>";
                 log_message("debug", "Got file: ".$path." : ".$arr1['curl_error_str']);
             }
@@ -131,7 +167,12 @@ class Calendar extends CI_Controller {
                         );
                         //echo json_encode($da);
                         $this->dbCom->insert($tableName, $da);
+                    } else {
+                        // update
                     }
+
+                    $data1['data_companies'][] = $tableName;
+
                     $comUpdated = $comUpdated + 1;
                 } else {
                     if($tableName != "") {
@@ -162,6 +203,10 @@ class Calendar extends CI_Controller {
                         //echo json_encode($da);
                         $this->dbCom->insert($tableName, $da);
                         $comLateUpdated = $comLateUpdated + 1;
+
+                        $data1['data_companies'][] = $tableName;
+                        $data1['new_companies'][] = $tableName;
+
                     } else {
                         $da = array(
                             'date' => "20".$year."-".$month."-".$day,
@@ -171,11 +216,24 @@ class Calendar extends CI_Controller {
                             'close_price' => $field['CLOSE_PRICE']
                         );
                         $this->data['message'] .= "Table not exists + Blank: (".$field['SYMBOL']."-".$tableName.")".json_encode($da)."<br>";
-                        $comLateUpdated = $comLateUpdated + 1;
                     }
                 }
             }
         }
         $this->data['message'] .= "Total Updated: ".$comUpdated." * ".$comLateUpdated."<br>";
+
+        $data1['tot_com'] = $comUpdated;
+        $data1['new_com'] = $comLateUpdated;
+
+        $this->db->where("date", "20".$year."-".$month."-".$day);
+        $q = $this->db->get("date_reports");
+        if($q->num_rows() == 0) {
+            $arr2 = array('date' => "20".$year."-".$month."-".$day, 'status' => "SUCCESS", 'tot_com_load' => $comUpdated, 'new_com_load' => $comLateUpdated, 'data' => json_encode($data1));
+            $this->db->insert('date_reports', $arr2);
+        } else {
+            $arr2 = array('status' => "SUCCESS", 'tot_com_load' => $comUpdated, 'new_com_load' => $comLateUpdated, 'data' => json_encode($data1));
+            $this->db->where("date", "20".$year."-".$month."-".$day);
+            $this->db->update('date_reports', $arr2);
+        }
     }
 }

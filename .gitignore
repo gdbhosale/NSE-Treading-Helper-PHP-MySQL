@@ -1,5 +1,6 @@
 docs/
 application/logs
+stock_files/*.zip
 stock_files/temp/
 temp/
 nse.sublime-project
