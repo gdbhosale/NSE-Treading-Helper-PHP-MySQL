@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost:8889
--- Generation Time: Mar 19, 2015 at 10:11 PM
+-- Generation Time: Mar 22, 2015 at 05:43 PM
 -- Server version: 5.5.38
 -- PHP Version: 5.5.14
 
@@ -46,6 +46,8 @@ CREATE TABLE `date_reports` (
   `date` date NOT NULL,
   `status` varchar(50) NOT NULL DEFAULT '{"status":"None"}',
   `data` text NOT NULL,
+  `tot_com_load` int(11) NOT NULL DEFAULT '0',
+  `new_com_load` int(11) NOT NULL DEFAULT '0',
   `time_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
