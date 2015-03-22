@@ -76,6 +76,7 @@ table.dataTable thead .sorting:after{content:"\f0dc";float:right;font-family:fon
 #selectYear{vertical-align:middle;float:right;}
 h2.year{margin:0px;color:#4ED1E8;}
 
+.calmonth{height:220px;}
 .calendar{width:100%;margin-top:10px;}
 .calendar td.calendar-day-head{width:14.28%;text-align:center;padding:1px 5px;color:#999;}
 .calendar td.calendar-day-head.monthS{padding:5px 5px;color:#4ED1E8;}

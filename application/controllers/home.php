@@ -43,6 +43,8 @@ class Home extends CI_Controller {
     public function dashboard() {
         $query = $this->db->get('companies');
         $this->data['total_companies'] = $query->num_rows();
+        $query = $this->db->get('date_reports');
+        $this->data['total_reports'] = $query->num_rows();
         
         $this->data['main_content'] = __FUNCTION__;
         $this->load->view('template', $this->data);

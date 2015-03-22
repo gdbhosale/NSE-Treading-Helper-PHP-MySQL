@@ -39,7 +39,12 @@ class Calendar extends CI_Controller {
     public function index() {
         $query = $this->db->get('companies');
         if($query->num_rows() > 0) {
-            $this->data['cnt_year'] = 2015;
+            $year = $this->input->get("year", TRUE);
+            if(isset($year) && $year != "") {
+                $this->data['cnt_year'] = $year;
+            } else {
+                $this->data['cnt_year'] = date("Y");
+            }
 
             $this->db->where("date >= ", "".$this->data['cnt_year']."-01-01");
             $this->db->where("date <= ", "".$this->data['cnt_year']."-12-31");
@@ -56,7 +61,7 @@ class Calendar extends CI_Controller {
         } else {
             $this->data['showError'] = array('title'=> "Company Data",
                 'message' => "Company data not present in Database !!!
-                    <br><br>Need initial setup. Click <a href='".$this->base_url."/home/init_setup'>here</a> to proceed.");
+                    <br><br>Need initial setup. Click <a href='".$this->base_url."/home/init_setup'>here</a> to proceed. It will take around 4-6 Minutes depands on connection &amp; computer speed.");
             $this->data['main_content'] = __FUNCTION__;
             $this->load->view('template', $this->data);
         }
@@ -127,7 +132,7 @@ class Calendar extends CI_Controller {
                     $arr2 = array('date' => "20".$year."-".$month."-".$day, 'status' => "FAILED", 'tot_com_load' => 0, 'new_com_load' => 0, 'data' => json_encode($data1));
                     $this->db->insert('date_reports', $arr2);
                 } else {
-                    $arr2 = array('status' => "FAILED", 'tot_com_load' => 0, 'new_com_load' => 0, 'data' => json_encode($data1));
+                    $arr2 = array('status' => "FAILED", 'tot_com_load' => 0, 'new_com_load' => 0, 'data' => json_encode($data1), 'time_updated' => date("Y-m-d H:i:s"));
                     $this->db->where("date", "20".$year."-".$month."-".$day);
                     $this->db->update('date_reports', $arr2);
                 }
@@ -169,6 +174,15 @@ class Calendar extends CI_Controller {
                         $this->dbCom->insert($tableName, $da);
                     } else {
                         // update
+                        $da = array(
+                            'open_price' => $field['OPEN_PRICE'],
+                            'high_price' => $field['HIGH_PRICE'],
+                            'low_price' => $field['LOW_PRICE'],
+                            'close_price' => $field['CLOSE_PRICE']
+                        );
+                        //echo json_encode($da);
+                        $this->dbCom->where("date", "20".$year."-".$month."-".$day);
+                        $this->dbCom->update($tableName, $da);
                     }
 
                     $data1['data_companies'][] = $tableName;
@@ -231,7 +245,7 @@ class Calendar extends CI_Controller {
             $arr2 = array('date' => "20".$year."-".$month."-".$day, 'status' => "SUCCESS", 'tot_com_load' => $comUpdated, 'new_com_load' => $comLateUpdated, 'data' => json_encode($data1));
             $this->db->insert('date_reports', $arr2);
         } else {
-            $arr2 = array('status' => "SUCCESS", 'tot_com_load' => $comUpdated, 'new_com_load' => $comLateUpdated, 'data' => json_encode($data1));
+            $arr2 = array('status' => "SUCCESS", 'tot_com_load' => $comUpdated, 'new_com_load' => $comLateUpdated, 'data' => json_encode($data1), 'time_updated' => date("Y-m-d H:i:s"));
             $this->db->where("date", "20".$year."-".$month."-".$day);
             $this->db->update('date_reports', $arr2);
         }
