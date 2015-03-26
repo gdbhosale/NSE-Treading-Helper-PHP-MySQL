@@ -93,6 +93,19 @@ function processSymbol($symb) {
     return trim($symb);
 }
 
+function trimCSVRow($row) {
+	$rowN = array();
+    foreach ($row as $key => $value) {
+    	if(trim($key) != "") {
+    		if(trim($key) == "OPEN_INT*") {
+    			$key = "OPEN_INT";
+    		}
+    		$rowN[trim($key)] = trim($value);
+    	}
+    }
+    return $rowN;
+}
+
 function unzipFile($zipFile, $folder) {
     $zip = new ZipArchive;
     $error = "";
@@ -224,7 +237,7 @@ function draw_calendar($month, $year, $report_days) {
 			if($is_data_loaded) {
 				if($data_load_success) {
 					$classS = "green";
-					$contentS = "Companies: ".$datt['tot_com_load']."<br>New Com.: ".$datt['new_com_load']."<a class='btn btn-warning btn-sm' style='margin-top:5px;' href='".$base_url."/calendar/update_db_datewise?date=".$dateT."-".$monthT."-".$yearT."'>Download Again</a>";
+					$contentS = "Companies: ".$datt['tot_com_load']."<br>New Com.: ".$datt['new_com_load']."<br><a class='btn btn-primary btn-xs'  href='".$base_url."/calendar/report_datewise?date=".$dateT."-".$monthT."-".$yearT."'>Report</a><a class='btn btn-warning btn-xs' style='margin-top:5px;' href='".$base_url."/calendar/update_db_datewise?date=".$dateT."-".$monthT."-".$yearT."'>Download Again</a>";
 					$contentS .= "<ol>";
 					foreach ($datt['data']->new_companies as $value) {
 						$contentS .= "<li>".$value."</li>";
@@ -232,11 +245,11 @@ function draw_calendar($month, $year, $report_days) {
 					$contentS .= "</ol>";
 				} else {
 					$classS = "red";
-					$contentS = "<a class='btn btn-danger btn-sm' href='".$base_url."/calendar/update_db_datewise?date=".$dateT."-".$monthT."-".$yearT."'>Retry</a>";
+					$contentS = "<a class='btn btn-primary btn-xs' style='margin-top:5px;' href='".$base_url."/calendar/report_datewise?date=".$dateT."-".$monthT."-".$yearT."'>Report</a><a class='btn btn-danger btn-xs' style='margin-top:5px;' href='".$base_url."/calendar/update_db_datewise?date=".$dateT."-".$monthT."-".$yearT."'>Retry</a>";
 				}
 			} else {
 				$classS = "";
-				$contentS = "<a class='btn btn-primary btn-sm' href='".$base_url."/calendar/update_db_datewise?date=".$dateT."-".$monthT."-".$yearT."'>Download</a>";
+				$contentS = "<a class='btn btn-primary btn-xs' href='".$base_url."/calendar/update_db_datewise?date=".$dateT."-".$monthT."-".$yearT."'>Download</a>";
 			}
 		} else {
 			$classS = "white";

@@ -9,12 +9,14 @@ http://www.nseindia.com/products/content/equities/equities/archieve_eq.htm
 2015-02-17 
 
 Things reamining:_________________
-month doanload
-export companies wise data into csv
-find company duplicate - auto
-find company duplicate - manual
-share price spliting
-report detail view
+- Daywise Download =====
+- monthwise doanload
+- export companies wise data into csv
+- find company duplicate - auto
+- find company duplicate - manual
+- share price spliting
+- report detail view =====
+- option data download =====
 
 Option Data - 
 fo18032015.zip -> op18032015.csv
@@ -26,4 +28,4 @@ STR_PRICE - provide us file name
 OPT_TYPE - Type of share
 
 Required details:
-OPEN_PRICE ,HI_PRICE   ,LO_PRICE   ,CLOSE_PRICE, OPEN_INT, TRD_QTY
+OPEN_PRICE ,HI_PRICE   ,LO_PRICE   ,CLOSE_PRICE, OPEN_INT, NOTION_VAL, TRD_QTY

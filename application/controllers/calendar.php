@@ -32,10 +32,20 @@ class Calendar extends CI_Controller {
         $config['char_set'] = "utf8";
         $config['dbcollat'] = "utf8_general_ci";
         $this->dbCom = $this->load->database($config, TRUE);
-        
+            
         $this->load->library('csvreader');
     }
     
+    public function testIO() {
+        //echo "Hi<br>";
+        $field = json_decode('{"INSTRUMENT":"OPTIDX","SYMBOL":"NIFTY","EXP_DATE":"26\/03\/2015","STR_PRICE":"00004200.00","OPT_TYPE":"CE","OPEN_PRICE":"00004425.60","HI_PRICE":"00004428.75","LO_PRICE":"00004370.00","CLOSE_PRICE":"00004379.65","OPEN_INT*":"000000000049875","TRD_QTY":"17850","NO_OF_CONT":"714","NO_OF_TRADE":"136","NOTION_VAL":"153511166.25","PR_VAL":"78541166.25"}', true);
+        //print_r($field);
+        $this->processIOStock($field);
+        echo $this->data['message'];
+    }
+
+    
+
     public function index() {
         $query = $this->db->get('companies');
         if($query->num_rows() > 0) {
@@ -62,6 +72,27 @@ class Calendar extends CI_Controller {
             $this->data['showError'] = array('title'=> "Company Data",
                 'message' => "Company data not present in Database !!!
                     <br><br>Need initial setup. Click <a href='".$this->base_url."/home/init_setup'>here</a> to proceed. It will take around 4-6 Minutes depands on connection &amp; computer speed.");
+            $this->data['main_content'] = __FUNCTION__;
+            $this->load->view('template', $this->data);
+        }
+    }
+
+    public function report_datewise() {
+        $date = $this->input->get("date", TRUE);
+        $arr = explode("-", $date);
+        $date = "20".$arr[2]."-".$arr[1]."-".$arr[0];
+
+        $this->db->where("date", $date);
+        $query = $this->db->get('date_reports');
+        if($query->num_rows() == 1) {
+            $this->data['date'] = $date;
+            $this->data['report'] = $query->row_array();
+            $this->data['report']['data'] = json_decode($this->data['report']['data']);
+
+            $this->data['main_content'] = __FUNCTION__;
+            $this->load->view('template', $this->data);
+        } else {
+            $this->data['showError'] = array('title'=> "Company Data", 'message' => "Company data not present in Database !!!");
             $this->data['main_content'] = __FUNCTION__;
             $this->load->view('template', $this->data);
         }
@@ -239,6 +270,58 @@ class Calendar extends CI_Controller {
         $data1['tot_com'] = $comUpdated;
         $data1['new_com'] = $comLateUpdated;
 
+        // Load Index Option Data
+        $file_fo = "fo".$day.$month."20".$year.".zip";
+        if(file_exists($this->base_path . "/stock_files/temp/".$file_fo)) {
+            $this->data['message'] .= "Option File ".$file_fo." Exists !!!<br>";
+            $this->data['error'] .= unzipFile($this->base_path . "/stock_files/temp/".$file_fo, $this->base_path."/stock_files/temp/fo");
+
+            $file_fom = "op".$day.$month."20".$year.".csv";
+            if(file_exists($this->base_path . "/stock_files/temp/fo/".$file_fom)) {
+                // If Option csv exists -> process it
+                $csvData = $this->csvreader->parse_file($this->base_path."/stock_files/temp/fo/".$file_fom);
+                foreach($csvData as $field) {
+                    $field = trimCSVRow($field);
+                    if(isset($field['SYMBOL']) && ( $field['SYMBOL'] == "NIFTY" || $field['SYMBOL'] == "BANKNIFTY")) {
+                        //$this->data['message'] .= json_encode($field)."<br>";
+                        $this->processIOStock("20".$year."-".$month."-".$day, $field);
+                    }
+                }
+            } else {
+                $this->data['message'] .= "Option File ".$file_fom." not Exists !!!<br>";
+                $data1['error_message'] = "Option File ".$file_fom." not Exists !!!";
+
+                $this->db->where("date", "20".$year."-".$month."-".$day);
+                $q = $this->db->get("date_reports");
+                if($q->num_rows() == 0) {
+                    $arr2 = array('date' => "20".$year."-".$month."-".$day, 'status' => "FAILED", 'tot_com_load' => $comUpdated, 'new_com_load' => $comLateUpdated, 'data' => json_encode($data1));
+                    $this->db->insert('date_reports', $arr2);
+                } else {
+                    $arr2 = array('status' => "FAILED", 'tot_com_load' => $comUpdated, 'new_com_load' => $comLateUpdated, 'data' => json_encode($data1), 'time_updated' => date("Y-m-d H:i:s"));
+                    $this->db->where("date", "20".$year."-".$month."-".$day);
+                    $this->db->update('date_reports', $arr2);
+                }
+                return 0;
+            }
+
+        } else {
+            $this->data['message'] .= "Option Zip File ".$file_fo." not Exists !!!<br>";
+            $data1['error_message'] = "Option Zip File ".$file_fo." not Exists !!!";
+
+            $this->db->where("date", "20".$year."-".$month."-".$day);
+            $q = $this->db->get("date_reports");
+            if($q->num_rows() == 0) {
+                $arr2 = array('date' => "20".$year."-".$month."-".$day, 'status' => "FAILED", 'tot_com_load' => $comUpdated, 'new_com_load' => $comLateUpdated, 'data' => json_encode($data1));
+                $this->db->insert('date_reports', $arr2);
+            } else {
+                $arr2 = array('status' => "FAILED", 'tot_com_load' => $comUpdated, 'new_com_load' => $comLateUpdated, 'data' => json_encode($data1), 'time_updated' => date("Y-m-d H:i:s"));
+                $this->db->where("date", "20".$year."-".$month."-".$day);
+                $this->db->update('date_reports', $arr2);
+            }
+            return 0;
+        }
+        //$this->data['error'] .= unzipFile($this->base_path . "/stock_files/".$filename, $this->base_path."/stock_files/temp");
+
         $this->db->where("date", "20".$year."-".$month."-".$day);
         $q = $this->db->get("date_reports");
         if($q->num_rows() == 0) {
@@ -249,5 +332,86 @@ class Calendar extends CI_Controller {
             $this->db->where("date", "20".$year."-".$month."-".$day);
             $this->db->update('date_reports', $arr2);
         }
+    }
+
+    private function processIOStock($date, $row) {
+        $folder = $this->base_path . "/idx_opt/";
+        $stype = "N";
+        if($row['SYMBOL'] == "BANKNIFTY") {
+            $stype = "B";
+        }
+        $otype = "C";
+        if($row['OPT_TYPE'] == "PE") {
+            $otype = "P";
+        }
+        // convert to numbers
+        $sprice = intval($row['STR_PRICE']);
+        $row['OPEN_PRICE'] = floatval($row['OPEN_PRICE']);
+        $row['HI_PRICE'] = floatval($row['HI_PRICE']);
+        $row['LO_PRICE'] = floatval($row['LO_PRICE']);
+        $row['CLOSE_PRICE'] = floatval($row['CLOSE_PRICE']);
+        $row['OPEN_INT'] = floatval($row['OPEN_INT']);
+        $row['NOTION_VAL'] = floatval($row['NOTION_VAL']);
+        $row['TRD_QTY'] = floatval($row['TRD_QTY']);
+
+
+        $arr = explode("/", $row['EXP_DATE']);
+        $eYear = $arr[2];
+        $eMonth = $arr[1];
+        $eDate = $arr[0];
+        //$this->data['message'] = "<br>";
+        if(!file_exists($folder.$eYear)) {
+            mkdir($folder.$eYear);
+            //$this->data['message'] .= "Year ".$eYear." folder created. <br>";
+            mkdir($folder.$eYear."/".$eMonth);
+        }
+        if(!file_exists($folder.$eYear."/".$eMonth)) {
+            mkdir($folder.$eYear."/".$eMonth);
+            //$this->data['message'] .= "Month ".$eMonth." folder created. <br>";
+        }
+        $fname = $stype.$eYear.$eMonth.$eDate.$otype.$sprice.".csv";
+
+        $fexists = "false";
+        $matchf = "false";
+        
+        if(!file_exists($folder.$eYear."/".$eMonth."/".$fname)) {
+            $fexists = "false";
+            // create option index file if not exists
+            $file = fopen($folder.$eYear."/".$eMonth."/".$fname, "w");
+            fputcsv($file, explode(",", "CNT_DATE,OPEN_PRICE,HI_PRICE,LO_PRICE,CLOSE_PRICE,OPEN_INT,NOTION_VAL,TRD_QTY,"));
+            fputcsv($file, explode(",", "".$date.",".$row['OPEN_PRICE'].",".$row['HI_PRICE'].",".$row['LO_PRICE'].",".$row['CLOSE_PRICE'].",".$row['OPEN_INT'].",".$row['NOTION_VAL'].",".$row['TRD_QTY'].","));
+            fclose($file);
+        } else {
+            $fexists = "true";
+            $contents = file_get_contents($folder.$eYear."/".$eMonth."/".$fname);
+            $pattern = preg_quote("".$date, '/');
+            $pattern = "/^.*$pattern.*\$/m";
+            if(!preg_match_all($pattern, $contents, $matches)) {
+                // write to file
+                $file = fopen($folder.$eYear."/".$eMonth."/".$fname, "a");
+                fputcsv($file, explode(",", "".$date.",".$row['OPEN_PRICE'].",".$row['HI_PRICE'].",".$row['LO_PRICE'].",".$row['CLOSE_PRICE'].",".$row['OPEN_INT'].",".$row['NOTION_VAL'].",".$row['TRD_QTY'].","));
+                fclose($file);
+
+                $this->sortCsv($folder.$eYear."/".$eMonth."/".$fname);
+            } else {
+                $matchf = "true";
+            }
+        }
+        //$this->data['message'] .= "File: $fname ($fexists), Match: ($matchf)  <br>";
+    }
+
+    public function sortCsv($filename) {
+        $dates = array();
+        $csvData = $this->csvreader->parse_file($filename);
+        foreach($csvData as $field) {
+            $dates[] = $field['CNT_DATE'];
+        }
+        array_multisort($dates, $csvData);
+        $file = fopen($filename, "w");
+        fputcsv($file, explode(",", "CNT_DATE,OPEN_PRICE,HI_PRICE,LO_PRICE,CLOSE_PRICE,OPEN_INT,NOTION_VAL,TRD_QTY,"));
+        foreach($csvData as $row) {
+            fputcsv($file, explode(",", "".$row['CNT_DATE'].",".$row['OPEN_PRICE'].",".$row['HI_PRICE'].",".$row['LO_PRICE'].",".$row['CLOSE_PRICE'].",".$row['OPEN_INT'].",".$row['NOTION_VAL'].",".$row['TRD_QTY'].","));
+        }
+        fclose($file);
     }
 }

@@ -1,5 +1,6 @@
 docs/
 application/logs
+idx_opt/
 stock_files/*.zip
 stock_files/temp/
 temp/
