@@ -43,6 +43,8 @@ class Home extends CI_Controller {
     public function dashboard() {
         $query = $this->db->get('companies');
         $this->data['total_companies'] = $query->num_rows();
+
+        $this->db->where("status", "SUCCESS");
         $query = $this->db->get('date_reports');
         $this->data['total_reports'] = $query->num_rows();
         
