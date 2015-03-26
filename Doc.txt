@@ -10,7 +10,7 @@ http://www.nseindia.com/products/content/equities/equities/archieve_eq.htm
 
 Things reamining:_________________
 - Daywise Download =====
-- monthwise doanload
+- monthwise doanload =====
 - export companies wise data into csv
 - find company duplicate - auto
 - find company duplicate - manual

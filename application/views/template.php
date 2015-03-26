@@ -3,7 +3,6 @@ $sitename = $this->config->item('sitename');
 $section = $this->router->fetch_class();
 include('includes/header.php');
 ?>
-
 <body>
     <div class='lgdat hide' lg='<?php //echo $isLogin; ?>' section='<?php echo $section; ?>' main_content='<?php echo $main_content; ?>' base_url='<?php echo $base_url; ?>'></div>
 

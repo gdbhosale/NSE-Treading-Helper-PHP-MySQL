@@ -152,6 +152,15 @@ function draw_calendar($month, $year, $report_days) {
 	$cntYearY = intval(date("Y"));
 	$cntYear = intval(date("y"));
 
+	$monthT = $month;
+	if($month < 10) {
+		$monthT = "0".$month;
+	}
+	$yearT = $year;
+	if($year >= 2000) {
+		$yearT = $year - ((int)($year / 100) * 100);
+	}
+
 	$cntTime = strtotime("".$cntYearY."-".$cntMonth."-".$cntDate);
 
 	/* draw table */
@@ -174,7 +183,7 @@ function draw_calendar($month, $year, $report_days) {
 	    'November',
 	    'December',
 	    );
-	$calendar.= '<tr class="calendar-row"><td class="calendar-day-head monthS" colspan="7">'.$monthsArr[$month-1].'</td></tr>';
+	$calendar.= '<tr class="calendar-row"><td class="calendar-day-head monthS" colspan="7">'.$monthsArr[$month-1].' <a href="'.$base_url.'/calendar/update_db_monthwise?month='.$monthT.'&year='.$yearT.'" class="btn btn-success btn-xs pull-right"><i class="fa fa-download"></i></a></td></tr>';
 	$calendar.= '<tr class="calendar-row"><td class="calendar-day-head">'.implode('</td><td class="calendar-day-head">', $headings).'</td></tr>';
 
 	/* days and weeks vars now ... */
@@ -200,14 +209,6 @@ function draw_calendar($month, $year, $report_days) {
 		$dateT = $list_day;
 		if($list_day < 10) {
 			$dateT = "0".$list_day;
-		}
-		$monthT = $month;
-		if($month < 10) {
-			$monthT = "0".$month;
-		}
-		$yearT = $year;
-		if($year >= 2000) {
-			$yearT = $year - ((int)($year / 100) * 100);
 		}
 		$dateTime = strtotime("".$year."-".$monthT."-".$dateT);
 		// process data load job

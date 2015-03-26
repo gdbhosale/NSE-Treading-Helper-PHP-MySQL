@@ -1,6 +1,6 @@
 <div class="row">
     <div class="col-lg-12">
-        <h1 class="page-header">Daily Download Report: <?php echo $date; ?> <a class="btn btn-success btn-md pull-right" href="<?php echo $base_url; ?>/calendar">Back to Calendar</a></h1>
+        <h1 class="page-header">Daily Download Report: <?php echo $date; ?> <a class="btn btn-success btn-md pull-right" href="<?php echo $base_url; ?>/calendar?year=<?php echo $year; ?>">Back to Calendar</a></h1>
     </div>
 </div>
 <div class="row">

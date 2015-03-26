@@ -80,12 +80,14 @@ class Calendar extends CI_Controller {
     public function report_datewise() {
         $date = $this->input->get("date", TRUE);
         $arr = explode("-", $date);
+        $year = "20".$arr[2];
         $date = "20".$arr[2]."-".$arr[1]."-".$arr[0];
 
         $this->db->where("date", $date);
         $query = $this->db->get('date_reports');
         if($query->num_rows() == 1) {
             $this->data['date'] = $date;
+            $this->data['year'] = $year;
             $this->data['report'] = $query->row_array();
             $this->data['report']['data'] = json_decode($this->data['report']['data']);
 
@@ -100,6 +102,8 @@ class Calendar extends CI_Controller {
 
     public function update_db_datewise() {
         $date = $this->input->get("date", TRUE);
+        $arr = explode("-", $date);
+        $year = "20".$arr[2];
         $query = $this->db->get('companies');
         if($query->num_rows() > 0) {
             $this->data['date'] = $date;
@@ -107,8 +111,31 @@ class Calendar extends CI_Controller {
             // 26-02-15
             $this->loadDaywiseReport($date);
 
+            $this->data['year'] = $year;
             $this->data['main_content'] = __FUNCTION__;
             $this->load->view('template', $this->data);
+        } else {
+            $this->data['showError'] = array('title'=> "Company Data", 'message' => "Company data not present in Database !!!");
+            $this->data['main_content'] = __FUNCTION__;
+            $this->load->view('template', $this->data);
+        }
+    }
+
+    public function update_db_monthwise() {
+        $year = $this->input->get("year", TRUE);
+        $month = $this->input->get("month", TRUE);
+        $query = $this->db->get('companies');
+        if($query->num_rows() > 0) {
+            $days = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+            for ($i=1; $i <= $days; $i++) { 
+                $dateT = $i;
+                if($i < 10) {
+                    $dateT = "0".$i;
+                }
+                //echo "".$dateT."-".$month."-".$year."<br>";
+                $this->loadDaywiseReport("".$dateT."-".$month."-".$year);
+            }
+            header("location:".$this->base_url."/calendar?year=20".$year);
         } else {
             $this->data['showError'] = array('title'=> "Company Data", 'message' => "Company data not present in Database !!!");
             $this->data['main_content'] = __FUNCTION__;
