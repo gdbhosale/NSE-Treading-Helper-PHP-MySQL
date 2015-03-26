@@ -22,7 +22,7 @@
         echo "<td>".$row['table']."</td>";
         echo "<td>".$row['data_days']." / ".$load_success."</td>";
         echo "<td>";
-        //echo "<a class='btn btn-xs btn-success'>View</a>";
+        echo "<a class='btn btn-xs btn-primary' href='".$this->base_url."/companies/view?com_id=".$row['id']."'>View</a> ";
         echo "<a class='btn btn-xs btn-success' href='".$this->base_url."/companies/export?com_id=".$row['id']."'>Export</a>";
         echo "</td>";
         echo "</tr>";

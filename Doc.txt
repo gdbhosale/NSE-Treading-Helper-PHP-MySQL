@@ -12,6 +12,7 @@ Things reamining:_________________
 - Daywise Download =====
 - monthwise doanload =====
 - export companies wise data into csv =====
+- Company View + Simple Graph Plot =====
 - find company duplicate - auto
 - find company duplicate - manual
 - share price spliting

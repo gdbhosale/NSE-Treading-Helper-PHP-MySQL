@@ -22,6 +22,7 @@
             <li>
                 <a href="<?php echo $base_url; ?>/companies"><i class="fa fa-building-o fa-fw"></i> Companies</a>
             </li>
+            <!--
             <li>
                 <a href="#"><i class="fa fa-line-chart fa-fw"></i> Charts<span class="fa arrow"></span></a>
                 <ul class="nav nav-second-level">
@@ -34,7 +35,7 @@
                     <li><a href="<?php echo $base_url; ?>/home/company_export">Company Data</a></li>
                 </ul>
             </li>
-            
+            -->
         </ul>
     </div>
 </div>
