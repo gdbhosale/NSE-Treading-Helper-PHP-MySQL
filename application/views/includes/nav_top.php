@@ -1,5 +1,6 @@
-<!--
+
 <ul class="nav navbar-top-links navbar-right">
+    <!--
     <li class="dropdown">
         <a class="dropdown-toggle" data-toggle="dropdown" href="#">
             <i class="fa fa-envelope fa-fw"></i>  <i class="fa fa-caret-down"></i>
@@ -198,5 +199,16 @@
             </li>
         </ul>
     </li>
+    -->
+    <li class="dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+            <i class="fa fa-gear fa-fw"></i> Settings <i class="fa fa-caret-down"></i>
+        </a>
+        <ul class="dropdown-menu dropdown-user">
+            <li><a href="<?php echo $this->base_url; ?>/home/init_setup"><i class="fa fa-user fa-fw"></i> Clean All</a></li>
+            <li><a href="<?php echo $this->base_url; ?>/home/cleanComTables"><i class="fa fa-gear fa-fw"></i> Intial Setup</a></li>
+            <li class="divider"></li>
+            <li>Use with precautions... Or call +91-7350558900</li>
+        </ul>
+    </li>
 </ul>
--->
