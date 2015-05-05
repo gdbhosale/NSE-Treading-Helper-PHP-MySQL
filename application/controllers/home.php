@@ -239,4 +239,19 @@ class Home extends CI_Controller {
             return $query->num_rows();
         }
     }
+
+    function get_sync_data() {
+        $di = new RecursiveDirectoryIterator($this->base_path."/data/idx_opt/");
+        $to = get_timezone_offset("Asia/Kolkata");
+        $arr = array();
+        foreach (new RecursiveIteratorIterator($di) as $filename => $file) {
+            if(!endsWith($filename, "/.") && !endsWith($filename, "/..")) {
+                $ff = array('filename' => $filename, 'size' => $file->getSize(), 'mtime' => ($file->getMTime() - $to));
+                $arr[] = $ff;
+            }
+            //echo $filename . ' - ' . $file->getSize() . ' bytes, '.date ("F d Y H:i:s.", "".($file->getMTime() - $to)).' <br/>';
+        }
+        //echo count($arr);
+        echo json_encode($arr);
+    }
 }

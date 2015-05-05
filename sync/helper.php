@@ -1,4 +1,4 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php
 
 if ( ! function_exists('startsWith')) {
 	function startsWith($haystack, $needle) {
@@ -149,6 +149,35 @@ function emptyFolder($folder) {
             delete_file($file);
         }
     }
+}
+
+function create_dir_structure($base_path, $dir) {
+    $dir = trim($dir, "/");
+	$arr = split("/", $dir);
+	if(isset($arr[0]) && file_exists($base_path."/".$arr[0])) {
+		//echo "Folder exists !";
+	} else {
+		//echo "Folder not exists !".$base_path."/".$arr[0];
+		mkdir($base_path."/".$arr[0]);
+	}
+	if(isset($arr[1]) && file_exists($base_path."/".$arr[0]."/".$arr[1])) {
+		//echo "Folder exists !";
+	} else {
+		//echo "Folder not exists !".$base_path."/".$arr[0]."/".$arr[1];
+		mkdir($base_path."/".$arr[0]."/".$arr[1]);
+	}
+	if(isset($arr[2]) && file_exists($base_path."/".$arr[0]."/".$arr[1]."/".$arr[2])) {
+		//echo "Folder exists !";
+	} else {
+		//echo "Folder not exists !".$base_path."/".$arr[0]."/".$arr[1]."/".$arr[2];
+		mkdir($base_path."/".$arr[0]."/".$arr[1]."/".$arr[2]);
+	}
+	if(isset($arr[3]) && file_exists($base_path."/".$arr[0]."/".$arr[1]."/".$arr[2]."/".$arr[3])) {
+		//echo "Folder exists !";
+	} else {
+		//echo "Folder not exists !".$base_path."/".$arr[0]."/".$arr[1]."/".$arr[2]."/".$arr[3];
+		mkdir($base_path."/".$arr[0]."/".$arr[1]."/".$arr[2]."/".$arr[3]);
+	}
 }
 
 function processSymbol($symb) {
@@ -373,3 +402,4 @@ function get_timezone_offset($remote_tz, $origin_tz = null) {
     $offset = $origin_dtz->getOffset($origin_dt) - $remote_dtz->getOffset($remote_dt);
     return $offset;
 }
+?>
