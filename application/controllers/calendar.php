@@ -5,6 +5,7 @@ class Calendar extends CI_Controller {
     var $base_url;
     var $base_path;
     var $stock_files;
+    var $opt_files;
     var $data;
     var $dbCom;
     
@@ -14,15 +15,16 @@ class Calendar extends CI_Controller {
         $this->base_url = $this->config->item("base_url");
 		$this->base_path = $this->config->item("base_path");
 		$this->stock_files = $this->config->item("stock_files");
+        $this->opt_files = $this->config->item("opt_files");
         $this->data = array();
         $this->data['base_url'] = $this->base_url;
         $this->data['load_from'] = "calendar";
 
         $this->db = $this->load->database('default', TRUE);
         $config['hostname'] = "localhost";
-        $config['username'] = "root";
-        $config['password'] = "root";
-        $config['database'] = "nse_tread_companies";
+        $config['username'] = "rupeemax_user1";
+        $config['password'] = $this->db->password;
+        $config['database'] = "rupeemax_tread_companies";
         $config['dbdriver'] = "mysqli";
         $config['dbprefix'] = "";
         $config['pconnect'] = FALSE;
@@ -161,17 +163,16 @@ class Calendar extends CI_Controller {
         
         // do we have file ?
         $fileExists = false;
-        if(file_exists($this->base_path . "/stock_files/".$filename) && filesize($this->base_path . "/stock_files/".$filename) > 1000) {
+        if(file_exists($this->base_path . "/data/stock_files/".$filename) && filesize($this->base_path . "/data/stock_files/".$filename) > 1000) {
             $fileExists = true;
             $data1['file_offline_status'] = 'true';
         }
-
         if(!$fileExists) {
             $data1['file_offline_status'] = 'false';
 
             $path = "http://www.nseindia.com/archives/equities/bhavcopy/pr/".$filename;
 
-            $zipResource = fopen($this->base_path . "/stock_files/".$filename, "w");
+            $zipResource = fopen($this->base_path . "/data/stock_files/".$filename, "w");
 
             $arr1 = downloadFile($path, $zipResource);
             $page = $arr1['page'];
@@ -201,11 +202,11 @@ class Calendar extends CI_Controller {
                 log_message("debug", "Got file: ".$path." : ".$arr1['curl_error_str']);
             }
         }
-        emptyFolder($this->base_path."/stock_files/temp");
-        $this->data['error'] .= unzipFile($this->base_path . "/stock_files/".$filename, $this->base_path."/stock_files/temp");
+        emptyFolder($this->base_path."/data/temp");
+        $this->data['error'] .= unzipFile($this->base_path . "/data/stock_files/".$filename, $this->base_path."/data/temp");
 
         // load daily company data to their db
-        $csvData = $this->csvreader->parse_file($this->base_path."/stock_files/temp/Pd".$day.$month.$year.".csv");
+        $csvData = $this->csvreader->parse_file($this->base_path."/data/temp/Pd".$day.$month.$year.".csv");
 
         $comUpdated = 0;
         $comLateUpdated = 0;
@@ -213,7 +214,7 @@ class Calendar extends CI_Controller {
             //$this->data['message'] .= "".$field['SYMBOL']."<br>";
             if($field['SERIES'] == "EQ") {
                 $tableName = processSymbol($field['SYMBOL']);
-
+                
                 // check if value already exists
                 if ($this->dbCom->table_exists($tableName)) {
 
@@ -242,19 +243,24 @@ class Calendar extends CI_Controller {
                         $this->dbCom->where("date", "20".$year."-".$month."-".$day);
                         $this->dbCom->update($tableName, $da);
                     }
-
                     $data1['data_companies'][] = $tableName;
 
                     $comUpdated = $comUpdated + 1;
                 } else {
                     if($tableName != "") {
                         $this->data['message'] .= "Table not exists: (".$field['SYMBOL']."-".$tableName.")<br>";
-                        $da = array(
-                            'symbol' => $field['SYMBOL'],
-                            'table' => $tableName,
-                            'isin' => ""
-                        );
-                        $this->db->insert('companies', $da);
+
+                        // check if row exists
+                        $this->db->where("symbol", $field['SYMBOL']);
+                        $query = $this->db->get('companies');
+                        if($query->num_rows() == 0) {
+                            $da = array(
+                                'symbol' => $field['SYMBOL'],
+                                'table' => $tableName,
+                                'isin' => ""
+                            );
+                            $this->db->insert('companies', $da);
+                        }
                         
                         $this->dbCom->query("CREATE TABLE IF NOT EXISTS ".$tableName." (
                             id int(11) AUTO_INCREMENT,
@@ -265,15 +271,33 @@ class Calendar extends CI_Controller {
                             close_price int(11) DEFAULT 0,
                             PRIMARY KEY (id)
                         )");
-                        $da = array(
-                            'date' => "20".$year."-".$month."-".$day,
-                            'open_price' => $field['OPEN_PRICE'],
-                            'high_price' => $field['HIGH_PRICE'],
-                            'low_price' => $field['LOW_PRICE'],
-                            'close_price' => $field['CLOSE_PRICE']
-                        );
-                        //echo json_encode($da);
-                        $this->dbCom->insert($tableName, $da);
+                        
+                        $this->dbCom->where("date", "20".$year."-".$month."-".$day);
+                        $q = $this->dbCom->get($tableName);
+                        if($q->num_rows() == 0) {
+                            $da = array(
+                                'date' => "20".$year."-".$month."-".$day,
+                                'open_price' => $field['OPEN_PRICE'],
+                                'high_price' => $field['HIGH_PRICE'],
+                                'low_price' => $field['LOW_PRICE'],
+                                'close_price' => $field['CLOSE_PRICE']
+                            );
+                            //echo json_encode($da);
+                            $this->dbCom->insert($tableName, $da);
+                        } else {
+                            // update
+                            $da = array(
+                                'open_price' => $field['OPEN_PRICE'],
+                                'high_price' => $field['HIGH_PRICE'],
+                                'low_price' => $field['LOW_PRICE'],
+                                'close_price' => $field['CLOSE_PRICE']
+                            );
+                            //echo json_encode($da);
+                            $this->dbCom->where("date", "20".$year."-".$month."-".$day);
+                            $this->dbCom->update($tableName, $da);
+                        }
+
+                        $comUpdated = $comUpdated + 1;
                         $comLateUpdated = $comLateUpdated + 1;
 
                         $data1['data_companies'][] = $tableName;
@@ -299,14 +323,14 @@ class Calendar extends CI_Controller {
 
         // Load Index Option Data
         $file_fo = "fo".$day.$month."20".$year.".zip";
-        if(file_exists($this->base_path . "/stock_files/temp/".$file_fo)) {
+        if(file_exists($this->base_path . "/data/temp/".$file_fo)) {
             $this->data['message'] .= "Option File ".$file_fo." Exists !!!<br>";
-            $this->data['error'] .= unzipFile($this->base_path . "/stock_files/temp/".$file_fo, $this->base_path."/stock_files/temp/fo");
+            $this->data['error'] .= unzipFile($this->base_path . "/data/temp/".$file_fo, $this->base_path."/data/temp/fo");
 
             $file_fom = "op".$day.$month."20".$year.".csv";
-            if(file_exists($this->base_path . "/stock_files/temp/fo/".$file_fom)) {
+            if(file_exists($this->base_path . "/data/temp/fo/".$file_fom)) {
                 // If Option csv exists -> process it
-                $csvData = $this->csvreader->parse_file($this->base_path."/stock_files/temp/fo/".$file_fom);
+                $csvData = $this->csvreader->parse_file($this->base_path."/data/temp/fo/".$file_fom);
                 foreach($csvData as $field) {
                     $field = trimCSVRow($field);
                     if(isset($field['SYMBOL']) && ( $field['SYMBOL'] == "NIFTY" || $field['SYMBOL'] == "BANKNIFTY")) {
@@ -362,7 +386,7 @@ class Calendar extends CI_Controller {
     }
 
     private function processIOStock($date, $row) {
-        $folder = $this->base_path . "/idx_opt/";
+        $folder = $this->base_path . "/data/idx_opt/";
         $stype = "N";
         if($row['SYMBOL'] == "BANKNIFTY") {
             $stype = "B";

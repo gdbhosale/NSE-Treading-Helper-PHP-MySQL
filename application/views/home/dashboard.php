@@ -4,6 +4,11 @@
     </div>
     <!-- /.col-lg-12 -->
 </div>
+<?php
+if(isset($feas_out) && $feas_out != "") {
+    echo '<div class="alert alert-danger" role="alert">'.$feas_out.'</div>';
+}
+?>
 <!-- /.row -->
 <div class="row">
     <div class="col-lg-3 col-md-6">

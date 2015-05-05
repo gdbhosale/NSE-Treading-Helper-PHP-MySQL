@@ -49,9 +49,9 @@ $active_group = 'default';
 $active_record = TRUE;
 
 $db['companies']['hostname'] = 'localhost';
-$db['companies']['username'] = 'root';
-$db['companies']['password'] = 'root';
-$db['companies']['database'] = 'nse_tread_companies';
+$db['companies']['username'] = 'rupeemax_user1';
+$db['companies']['password'] = 'rupeemax123#';
+$db['companies']['database'] = 'rupeemax_tread_companies';
 $db['companies']['dbdriver'] = 'mysqli';
 $db['companies']['dbprefix'] = '';
 $db['companies']['pconnect'] = TRUE;
@@ -66,9 +66,9 @@ $db['companies']['stricton'] = FALSE;
 
 
 $db['default']['hostname'] = 'localhost';
-$db['default']['username'] = 'root';
-$db['default']['password'] = 'root';
-$db['default']['database'] = 'nse_tread_help_1';
+$db['default']['username'] = 'rupeemax_user1';
+$db['default']['password'] = 'rupeemax123#';
+$db['default']['database'] = 'rupeemax_tread_help_1';
 $db['default']['dbdriver'] = 'mysqli';
 $db['default']['dbprefix'] = '';
 $db['default']['pconnect'] = TRUE;

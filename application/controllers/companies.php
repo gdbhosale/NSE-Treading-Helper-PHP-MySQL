@@ -5,6 +5,7 @@ class Companies extends CI_Controller {
     var $base_url;
     var $base_path;
     var $stock_files;
+    var $opt_files;
     var $data;
     var $dbCom;
     
@@ -14,15 +15,16 @@ class Companies extends CI_Controller {
         $this->base_url = $this->config->item("base_url");
 		$this->base_path = $this->config->item("base_path");
 		$this->stock_files = $this->config->item("stock_files");
+        $this->opt_files = $this->config->item("opt_files");
         $this->data = array();
         $this->data['base_url'] = $this->base_url;
         $this->data['load_from'] = "companies";
 
         $this->db = $this->load->database('default', TRUE);
         $config['hostname'] = "localhost";
-        $config['username'] = "root";
-        $config['password'] = "root";
-        $config['database'] = "nse_tread_companies";
+        $config['username'] = "rupeemax_user1";
+        $config['password'] = $this->db->password;
+        $config['database'] = "rupeemax_tread_companies";
         $config['dbdriver'] = "mysqli";
         $config['dbprefix'] = "";
         $config['pconnect'] = FALSE;

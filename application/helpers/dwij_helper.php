@@ -77,11 +77,77 @@ function getComingDayOfWeek($dow) {
 	return $tomorrow;
 }
 
+function process_perm($perms) {
+	if (($perms & 0xC000) == 0xC000) {
+	    // Socket
+	    $info = 's';
+	} elseif (($perms & 0xA000) == 0xA000) {
+	    // Symbolic Link
+	    $info = 'l';
+	} elseif (($perms & 0x8000) == 0x8000) {
+	    // Regular
+	    $info = '-';
+	} elseif (($perms & 0x6000) == 0x6000) {
+	    // Block special
+	    $info = 'b';
+	} elseif (($perms & 0x4000) == 0x4000) {
+	    // Directory
+	    $info = 'd';
+	} elseif (($perms & 0x2000) == 0x2000) {
+	    // Character special
+	    $info = 'c';
+	} elseif (($perms & 0x1000) == 0x1000) {
+	    // FIFO pipe
+	    $info = 'p';
+	} else {
+	    // Unknown
+	    $info = 'u';
+	}
+
+	// Owner
+	$info .= (($perms & 0x0100) ? 'r' : '-');
+	$info .= (($perms & 0x0080) ? 'w' : '-');
+	$info .= (($perms & 0x0040) ?
+	            (($perms & 0x0800) ? 's' : 'x' ) :
+	            (($perms & 0x0800) ? 'S' : '-'));
+
+	// Group
+	$info .= (($perms & 0x0020) ? 'r' : '-');
+	$info .= (($perms & 0x0010) ? 'w' : '-');
+	$info .= (($perms & 0x0008) ?
+	            (($perms & 0x0400) ? 's' : 'x' ) :
+	            (($perms & 0x0400) ? 'S' : '-'));
+
+	// World
+	$info .= (($perms & 0x0004) ? 'r' : '-');
+	$info .= (($perms & 0x0002) ? 'w' : '-');
+	$info .= (($perms & 0x0001) ?
+	            (($perms & 0x0200) ? 't' : 'x' ) :
+	            (($perms & 0x0200) ? 'T' : '-'));
+
+	return $info;
+}
+
+function delete_file($file) {
+	if(file_exists($file)) {
+		log_message("debug", "Deleting '".$file."'");
+		if(chmod($file, 0777)) {
+			return unlink($file);
+		} else {
+			log_message("error", "Cannot change file '".$file."' permmissions for deletion");
+			return FALSE;
+		}
+	} else {
+		return TRUE;
+	}
+}
+
 function emptyFolder($folder) {
     $files = glob($folder."/*");
     foreach($files as $file) {
-        if(is_file($file))
-            unlink($file);
+        if(is_file($file)) {
+            delete_file($file);
+        }
     }
 }
 
@@ -89,6 +155,7 @@ function processSymbol($symb) {
     $symb = str_replace("&", "_", $symb);
     $symb = str_replace("-", "_", $symb);
     $symb = str_replace(",", "_", $symb);
+    $symb = strtoupper($symb);
 
     return trim($symb);
 }
@@ -114,7 +181,7 @@ function unzipFile($zipFile, $folder) {
         log_message("error", "Unable to open the Zip File: ".$zipFile);
     }
     //Empty temp
-    emptyFolder($folder);
+    //emptyFolder($folder);
     // Extract Zip File
     $zip->extractTo($folder);
     $zip->close();

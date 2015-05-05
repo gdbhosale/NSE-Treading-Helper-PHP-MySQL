@@ -14,10 +14,15 @@
 | path to your installation.
 |
 */
+//$config['base_url']	= 'http://localhost/NSE-Treading-Helper-PHP-MySQL';
+//$config['base_path']	= '/Applications/MAMP/htdocs/NSE-Treading-Helper-PHP-MySQL';
+//$config['base_path']	= 'C:\xampp\htdocs\NSE-Treading-Helper-PHP-MySQL';
+
 $config['sitename']	= 'NSE Helper';
-$config['base_url']	= 'http://localhost/NSE-Treading-Helper-PHP-MySQL';
-$config['base_path']	= '/Applications/MAMP/htdocs/NSE-Treading-Helper-PHP-MySQL';
+$config['base_url']	= 'http://rupeemaxx.com/app1';
+$config['base_path']	= '/home/rupeemax/public_html/app1';
 $config['stock_files']	= 'stock_files';
+$config['opt_files']	= 'idx_opt';
 
 /*
 |--------------------------------------------------------------------------
@@ -247,7 +252,7 @@ $config['encryption_key'] = '';
 | 'sess_time_to_update'		= how many seconds between CI refreshing Session Information
 |
 */
-$config['sess_cookie_name']		= 'ci_session';
+$config['sess_cookie_name']		= 'ci_session_nse1';
 $config['sess_expiration']		= 7200;
 $config['sess_expire_on_close']	= FALSE;
 $config['sess_encrypt_cookie']	= FALSE;
