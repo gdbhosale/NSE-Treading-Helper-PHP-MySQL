@@ -122,6 +122,52 @@ class Calendar extends CI_Controller {
             $this->load->view('template', $this->data);
         }
     }
+    
+    public function update_db_datewise_cron() {
+        $date = date("d-m-y");
+        $arr = explode("-", $date);
+	$year = "20".$arr[2];
+        $query = $this->db->get('companies');
+        if($query->num_rows() > 0) {
+            $this->data['date'] = $date;
+
+            // 26-02-15
+            $this->loadDaywiseReport($date);
+            echo "Daily Download Report: ".$date.":<br>\n\n";
+            echo "Output: ".$this->data['message']."<br>\n\n";
+            echo "Error: ".$this->data['error']."<br>\n\n";
+        } else {
+            echo "Error: Company data not present in Database !!!<br>\n\n";
+        }
+    }
+    
+    public function update_db_back_cron() {
+        $this->db->where('key', 'cnt_date');
+        $query = $this->db->get('preferences');
+        $arr = $query->row_array();
+        $date = $arr['value'];
+        
+        // old update code
+        $arr = explode("-", $date);
+	$year = $arr[2];
+        $query = $this->db->get('companies');
+        if($query->num_rows() > 0) {
+            $dateCut = $arr[0]."-".$arr[1]."-".substr($arr[2], 2, 2);
+            //echo $this->data['date'] = $$dateCut;
+            // 26-02-15
+            $this->loadDaywiseReport($dateCut);
+            echo "Daily Download Report: ".$date.":<br>\n\n";
+            echo "Output: ".$this->data['message']."<br>\n\n";
+            echo "Error: ".$this->data['error']."<br>\n\n";
+            
+            // update DB for date - 1
+            $dayBefore = date("d-m-Y", strtotime('-1 day', strtotime($date)));
+	    $this->db->where("key", "cnt_date");
+            $this->db->update('preferences', array("value" => $dayBefore));
+        } else {
+            echo "Error: Company data not present in Database !!!<br>\n\n";
+        }
+    }
 
     public function update_db_monthwise() {
         $year = $this->input->get("year", TRUE);

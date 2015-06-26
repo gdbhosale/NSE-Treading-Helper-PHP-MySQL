@@ -17,6 +17,9 @@
                 <a href="<?php echo $base_url; ?>/home"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
             </li>
             <li>
+                <a href="<?php echo $base_url; ?>/indexo"><i class="fa fa-table fa-fw"></i> Index Options</a>
+            </li>
+            <li>
                 <a href="<?php echo $base_url; ?>/calendar"><i class="fa fa-table fa-fw"></i> Data Calendar</a>
             </li>
             <li>
