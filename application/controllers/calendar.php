@@ -367,16 +367,17 @@ class Calendar extends CI_Controller {
         $data1['tot_com'] = $comUpdated;
         $data1['new_com'] = $comLateUpdated;
 
+        
         // Load Index Option Data
-        $file_fo = "fo".$day.$month."20".$year.".zip";
-        if(file_exists($this->base_path . "/data/temp/".$file_fo)) {
-            $this->data['message'] .= "Option File ".$file_fo." Exists !!!<br>";
-            $this->data['error'] .= unzipFile($this->base_path . "/data/temp/".$file_fo, $this->base_path."/data/temp/fo");
-
+        
+        // Data before 2011-02-18 doesnt have index zip
+        
+        if($year.$month.$day <= "20110218") {
+            echo "Got Old";
             $file_fom = "op".$day.$month."20".$year.".csv";
-            if(file_exists($this->base_path . "/data/temp/fo/".$file_fom)) {
+            if(file_exists($this->base_path . "/data/temp/".$file_fom)) {
                 // If Option csv exists -> process it
-                $csvData = $this->csvreader->parse_file($this->base_path."/data/temp/fo/".$file_fom);
+                $csvData = $this->csvreader->parse_file($this->base_path."/data/temp/".$file_fom);
                 foreach($csvData as $field) {
                     $field = trimCSVRow($field);
                     if(isset($field['SYMBOL']) && ( $field['SYMBOL'] == "NIFTY" || $field['SYMBOL'] == "BANKNIFTY")) {
@@ -385,8 +386,8 @@ class Calendar extends CI_Controller {
                     }
                 }
             } else {
-                $this->data['message'] .= "Option File ".$file_fom." not Exists !!!<br>";
-                $data1['error_message'] = "Option File ".$file_fom." not Exists !!!";
+                $this->data['message'] .= "Old Option File ".$file_fom." not Exists !!!<br>";
+                $data1['error_message'] = "Old Option File ".$file_fom." not Exists !!!";
 
                 $this->db->where("date", "20".$year."-".$month."-".$day);
                 $q = $this->db->get("date_reports");
@@ -400,22 +401,55 @@ class Calendar extends CI_Controller {
                 }
                 return 0;
             }
-
         } else {
-            $this->data['message'] .= "Option Zip File ".$file_fo." not Exists !!!<br>";
-            $data1['error_message'] = "Option Zip File ".$file_fo." not Exists !!!";
+            $file_fo = "fo".$day.$month."20".$year.".zip";
+            if(file_exists($this->base_path . "/data/temp/".$file_fo)) {
+                $this->data['message'] .= "Option File ".$file_fo." Exists !!!<br>";
+                $this->data['error'] .= unzipFile($this->base_path . "/data/temp/".$file_fo, $this->base_path."/data/temp/fo");
 
-            $this->db->where("date", "20".$year."-".$month."-".$day);
-            $q = $this->db->get("date_reports");
-            if($q->num_rows() == 0) {
-                $arr2 = array('date' => "20".$year."-".$month."-".$day, 'status' => "FAILED", 'tot_com_load' => $comUpdated, 'new_com_load' => $comLateUpdated, 'data' => json_encode($data1));
-                $this->db->insert('date_reports', $arr2);
+                $file_fom = "op".$day.$month."20".$year.".csv";
+                if(file_exists($this->base_path . "/data/temp/fo/".$file_fom)) {
+                    // If Option csv exists -> process it
+                    $csvData = $this->csvreader->parse_file($this->base_path."/data/temp/fo/".$file_fom);
+                    foreach($csvData as $field) {
+                        $field = trimCSVRow($field);
+                        if(isset($field['SYMBOL']) && ( $field['SYMBOL'] == "NIFTY" || $field['SYMBOL'] == "BANKNIFTY")) {
+                            //$this->data['message'] .= json_encode($field)."<br>";
+                            $this->processIOStock("20".$year."-".$month."-".$day, $field);
+                        }
+                    }
+                } else {
+                    $this->data['message'] .= "Option File ".$file_fom." not Exists !!!<br>";
+                    $data1['error_message'] = "Option File ".$file_fom." not Exists !!!";
+
+                    $this->db->where("date", "20".$year."-".$month."-".$day);
+                    $q = $this->db->get("date_reports");
+                    if($q->num_rows() == 0) {
+                        $arr2 = array('date' => "20".$year."-".$month."-".$day, 'status' => "FAILED", 'tot_com_load' => $comUpdated, 'new_com_load' => $comLateUpdated, 'data' => json_encode($data1));
+                        $this->db->insert('date_reports', $arr2);
+                    } else {
+                        $arr2 = array('status' => "FAILED", 'tot_com_load' => $comUpdated, 'new_com_load' => $comLateUpdated, 'data' => json_encode($data1), 'time_updated' => date("Y-m-d H:i:s"));
+                        $this->db->where("date", "20".$year."-".$month."-".$day);
+                        $this->db->update('date_reports', $arr2);
+                    }
+                    return 0;
+                }
             } else {
-                $arr2 = array('status' => "FAILED", 'tot_com_load' => $comUpdated, 'new_com_load' => $comLateUpdated, 'data' => json_encode($data1), 'time_updated' => date("Y-m-d H:i:s"));
+                $this->data['message'] .= "Option Zip File ".$file_fo." not Exists !!!<br>";
+                $data1['error_message'] = "Option Zip File ".$file_fo." not Exists !!!";
+
                 $this->db->where("date", "20".$year."-".$month."-".$day);
-                $this->db->update('date_reports', $arr2);
+                $q = $this->db->get("date_reports");
+                if($q->num_rows() == 0) {
+                    $arr2 = array('date' => "20".$year."-".$month."-".$day, 'status' => "FAILED", 'tot_com_load' => $comUpdated, 'new_com_load' => $comLateUpdated, 'data' => json_encode($data1));
+                    $this->db->insert('date_reports', $arr2);
+                } else {
+                    $arr2 = array('status' => "FAILED", 'tot_com_load' => $comUpdated, 'new_com_load' => $comLateUpdated, 'data' => json_encode($data1), 'time_updated' => date("Y-m-d H:i:s"));
+                    $this->db->where("date", "20".$year."-".$month."-".$day);
+                    $this->db->update('date_reports', $arr2);
+                }
+                return 0;
             }
-            return 0;
         }
         //$this->data['error'] .= unzipFile($this->base_path . "/stock_files/".$filename, $this->base_path."/stock_files/temp");
 
@@ -510,5 +544,15 @@ class Calendar extends CI_Controller {
             fputcsv($file, explode(",", "".$row['CNT_DATE'].",".$row['OPEN_PRICE'].",".$row['HI_PRICE'].",".$row['LO_PRICE'].",".$row['CLOSE_PRICE'].",".$row['OPEN_INT'].",".$row['NOTION_VAL'].",".$row['TRD_QTY'].","));
         }
         fclose($file);
+    }
+    
+    public function cmpDate() {
+    	//$year <= "2011" && $month <= "02" && $day <= "18"
+    	$d = "20100714";
+    	if($d < "20110218") {
+    		echo "old";
+    	} else {
+    		echo "new";
+    	}
     }
 }
